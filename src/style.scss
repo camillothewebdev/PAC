@@ -847,6 +847,11 @@ nav ul {
   padding-bottom: 2em;
 }
 
+.server-error {
+  width: 60%;
+  max-width: 400px;
+}
+
 .message {
   background-color: rgb(232, 232, 228);
   color: rgb(0, 0, 0);
@@ -1276,6 +1281,10 @@ nav ul {
 
   .header-notification {
     color: black;
+  }
+
+  .server-error {
+    filter: invert(100%);
   }
 }
 
