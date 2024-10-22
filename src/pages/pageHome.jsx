@@ -45,7 +45,7 @@ function PageHome() {
   }, []);
 
   let listEvenements = [];
-  evenements.forEach((evenement) => {
+  evenements && evenements.forEach((evenement) => {
     if (listEvenements.length >= 3) {
       return;
     }
