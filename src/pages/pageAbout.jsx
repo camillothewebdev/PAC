@@ -61,7 +61,7 @@ function PageAbout() {
               </p>
             </div>
             <center>
-              <a href="../data/PAC.apk" download>Manuel utilisateur</a>
+                <button className="voir-plus">Manuel utilisateur</button>
             </center>
           </section>
         )}
