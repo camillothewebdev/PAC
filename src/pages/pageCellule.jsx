@@ -1,0 +1,460 @@
+import { useLocation, useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import axios from "axios";
+import { AuthContext } from "../context/authContext";
+import connection from "../data/connection";
+import MainLayout from "../layout/mainlayout";
+function PageCellule() {
+  const navigate = useNavigate();
+  const [niveaux, setNiveaux] = useState([]);
+  const [loading, setLoading] = useState(true);
+  let locationNiveau = useLocation().pathname.split("/")[2];
+  let locationFederation = locationNiveau.split("-")[0];
+  let locationIdNiveau = locationNiveau.split("-")[1];
+  const [celluleFormData, setcelluleFormData] = useState({
+    id: "",
+    libelle: "",
+    adresse: "",
+    type: "cellule",
+    idSection: locationIdNiveau,
+  });
+
+  const handleChange = (event) => {
+    setcelluleFormData((prev) => ({
+      ...prev,
+      [event.target.name]: event.target.value,
+    }));
+  };
+
+  const closeDialog = () => {
+    setcelluleFormData((prev) => ({
+      ...prev,
+      libelle: "",
+      adresse: "",
+    }));
+    document.getElementById("modal").close();
+  };
+
+  const openDialog = () => {
+    document.getElementById("modal").showModal();
+  };
+
+  const closeDialog2 = () => {
+    setcelluleFormData((prev) => ({
+      ...prev,
+      libelle: "",
+      adresse: "",
+    }));
+    document.getElementById("modal2").close();
+  };
+
+  const openDialog2 = (idNiveau) => {
+    let niveau = niveaux.find((niveau) => niveau.idNiveau == idNiveau);
+    setcelluleFormData((prev) => ({
+      ...prev,
+      id: idNiveau,
+      libelle: niveau.libelle,
+      adresse: niveau.adresse,
+    }));
+    document.getElementById("modal2").showModal();
+  };
+
+  const closeDialog3 = () => {
+    setcelluleFormData((prev) => ({
+      ...prev,
+      libelle: "",
+      adresse: "",
+    }));
+    document.getElementById("modal3").close();
+  };
+
+  const openDialog3 = (idNiveau) => {
+    let niveau = niveaux.find((niveau) => niveau.idNiveau == idNiveau);
+    setcelluleFormData((prev) => ({
+      ...prev,
+      id: idNiveau,
+      libelle: niveau.libelle,
+      adresse: niveau.adresse,
+    }));
+    document.getElementById("modal3").showModal();
+  };
+
+  const add = async (event) => {
+    if (celluleFormData.libelle == "" || celluleFormData.adresse == "") {
+      alert("Veuillez remplir le champ");
+      return;
+    }
+    event.target.disabled = true;
+    try {
+      let res = await axios.post(
+        connection + "/ajouter-cellule",
+        celluleFormData
+      );
+    } catch (error) {
+      console.log(error);
+      setServerError(true);
+    }
+    closeDialog();
+    fetchNiveaux();
+    event.target.disabled = false;
+  };
+
+  const edit = async (event) => {
+    if (celluleFormData.libelle == "" || celluleFormData.adresse == "") {
+      alert("Veuillez remplir le champ");
+      return;
+    }
+    event.target.disabled = true;
+    try {
+      let res = await axios.put(
+        connection + "/modifier-niveau",
+        celluleFormData
+      );
+      fetchNiveaux();
+    } catch (error) {
+      console.log(error);
+      setServerError(true);
+    }
+    event.target.disabled = false;
+    closeDialog2();
+  };
+
+  const remove = async (event) => {
+    event.target.disabled = true;
+    try {
+      let res = await axios.delete(
+        connection + "/supprimer-niveau/" + celluleFormData.id
+      );
+      fetchNiveaux();
+    } catch (error) {
+      console.log(error);
+      setServerError(true);
+    }
+    event.target.disabled = false;
+    closeDialog3();
+  };
+
+  const fetchNiveaux = async () => {
+    setLoading(true);
+    try {
+      let res = await axios.get(
+        connection + "/lire-cellule/" + locationIdNiveau
+      );
+      setNiveaux(res.data);
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      setServerError(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchNiveaux();
+  }, []);
+
+  let listNiveaux = [];
+  niveaux &&
+    niveaux.forEach((niveau) => {
+      if (niveau.idNiveau) {
+        let nombre;
+        console.log(niveau);
+        if (niveau.nombreMembres == 1) {
+          nombre = "1 membre";
+        } else if (niveau.nombreMembres > 1) {
+          nombre = niveau.nombreMembres + " membres";
+        } else {
+          nombre = "Aucune membre";
+        }
+        listNiveaux.push(
+          <div className="niveau" key={niveau.idNiveau}>
+            <div
+              onClick={() => {
+                navigate(
+                  `/membres-niveau/${locationNiveau}-${niveau.idNiveau}`
+                );
+              }}
+              style={{
+                padding: "0.5em",
+                borderRadius: "13px",
+              }}
+              className="content"
+            >
+              <h3>{niveau.libelle}</h3>
+              <p>{niveau.adresse}</p>
+              <strong>{nombre}</strong>
+            </div>
+            <div className="controls">
+              <img
+                src="../icon/delete.png"
+                onClick={() => {
+                  openDialog3(niveau.idNiveau);
+                }}
+              />
+              <img
+                src="../icon/edit.png"
+                onClick={() => {
+                  openDialog2(niveau.idNiveau);
+                }}
+              />
+            </div>
+          </div>
+        );
+      }
+    });
+
+  const goBack = () => {
+    navigate("/section/" + locationFederation);
+  };
+
+  const goToHome = () => {
+    navigate("/home");
+  };
+
+  const [serverError, setServerError] = useState(false);
+  if (serverError) {
+    return (
+      <div>
+        <center>
+          <img
+            className="server-error"
+            src="../img/no-wifi.png"
+            alt="Erreur de connexion"
+            width={"80%"}
+            height={"230px"}
+          />
+          <h3>Il y a une erreur au serveur</h3>
+          <br />
+          <div className="confirm-btn">
+            <button onClick={goToHome}>Réessayer</button>
+          </div>
+        </center>
+      </div>
+    );
+  }
+  return (
+    <>
+      <MainLayout>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div className="header-title">
+            <img src="../icon/back.png" className="back-btn" onClick={goBack} />
+          </div>
+          <div className="add" onClick={openDialog}>
+            <h3>CELLULE</h3>
+            <img src="../icon/ajouter.png" width="40px" />
+          </div>
+          <section
+            className="liste-niveaux"
+            style={{ height: "75vh", overflowY: "scroll", paddingTop: "0.5em" }}
+          >
+            {loading ? (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 1,
+                }}
+              >
+                <center>
+                  <img
+                    src="../img/wait.gif"
+                    className="wait"
+                    width="100%"
+                    alt="wait"
+                  />
+                </center>
+              </div>
+            ) : listNiveaux.length > 0 ? (
+              <>{listNiveaux}</>
+            ) : (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "50vh",
+                  }}
+                >
+                  Aucune cellule
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+        <dialog
+          id="modal"
+          style={{
+            fontWeight: "bold",
+            width: "90%",
+            maxWidth: "500px",
+            padding: "1.2em 2em",
+          }}
+        >
+          <div className="form">
+            <img
+              src="../icon/close.png"
+              width="35px"
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                margin: "0.5em",
+              }}
+              onClick={closeDialog}
+            />
+            <center>
+              <h2>NOUVEAU</h2>
+            </center>
+            <div className="zone">
+              <label htmlFor="libelle">Libelle :</label>
+              <input
+                type="text"
+                name="libelle"
+                value={celluleFormData.libelle}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="zone">
+              <label htmlFor="adresse">Adresse :</label>
+              <input
+                type="text"
+                name="adresse"
+                value={celluleFormData.adresse}
+                onChange={handleChange}
+              />
+            </div>
+            <br />
+            <button
+              className="dialog-btn"
+              style={{
+                fontSize: "1.6rem",
+                fontWeight: "bold",
+                marginTop: "1em",
+                padding: "0.2em 1em",
+                color: "black",
+                width: "100%",
+                maxWidth: "300px",
+              }}
+              onClick={add}
+            >
+              ENREGISTRER
+            </button>
+            <br />
+          </div>
+        </dialog>
+        <dialog
+          id="modal2"
+          style={{
+            fontWeight: "bold",
+            width: "90%",
+            maxWidth: "500px",
+            padding: "1.2em 2em",
+          }}
+        >
+          <div className="form">
+            <img
+              src="../icon/close.png"
+              width="35px"
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                margin: "0.5em",
+              }}
+              onClick={closeDialog2}
+            />
+            <center>
+              <h2>MODIFIER</h2>
+            </center>
+            <div className="zone">
+              <label htmlFor="libelle">Libelle :</label>
+              <input
+                type="text"
+                name="libelle"
+                value={celluleFormData.libelle}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="zone">
+              <label htmlFor="adresse">Adresse :</label>
+              <input
+                type="text"
+                name="adresse"
+                value={celluleFormData.adresse}
+                onChange={handleChange}
+              />
+            </div>
+            <br />
+            <button
+              className="dialog-btn"
+              style={{
+                fontSize: "1.6rem",
+                fontWeight: "bold",
+                marginTop: "1em",
+                padding: "0.2em 1em",
+                color: "black",
+                width: "100%",
+                maxWidth: "300px",
+              }}
+              onClick={edit}
+            >
+              MODIFIER
+            </button>
+            <br />
+          </div>
+        </dialog>
+        <dialog
+          id="modal3"
+          style={{
+            fontWeight: "bold",
+            width: "90%",
+            maxWidth: "500px",
+          }}
+        >
+          <p style={{ fontSize: "1.1rem", textAlign: "center" }}>
+            Voulez vous supprimer ?
+          </p>
+          <div
+            className="choices"
+            style={{ display: "flex", justifyContent: "space-evenly" }}
+          >
+            <button
+              onClick={closeDialog3}
+              className="dialog-btn"
+              style={{
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+                marginTop: "1em",
+                padding: "0.2em 1em",
+              }}
+            >
+              Non
+            </button>
+            <button
+              onClick={remove}
+              className="dialog-btn"
+              style={{
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+                marginTop: "1em",
+                padding: "0.2em 1em",
+                backgroundColor: "red",
+                color: "white",
+              }}
+            >
+              Oui
+            </button>
+          </div>
+        </dialog>
+      </MainLayout>
+    </>
+  );
+}
+export default PageCellule;
