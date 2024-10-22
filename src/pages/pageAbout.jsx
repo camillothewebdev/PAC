@@ -9,7 +9,7 @@ function PageAbout() {
   const { user } = useContext(AuthContext);
   const goToHome = () => {
     navigate("/");
-  };
+  }; 
 
   return (
     <MainLayout>
@@ -61,7 +61,7 @@ function PageAbout() {
               </p>
             </div>
             <center>
-              <button className="voir-plus">Manuel utilisateur</button>
+              <a href="../data/PAC.apk" download>Manuel utilisateur</a>
             </center>
           </section>
         )}
