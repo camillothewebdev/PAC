@@ -1,4 +1,4 @@
-export default "http://localhost:8800";
+export default "https://api-patriote-en-action.onrender.com";
 
 /*
 https://api-tutored-projet.onrender.com
